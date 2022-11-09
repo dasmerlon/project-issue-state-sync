@@ -1,0 +1,40 @@
+query projectIssuesAndFields($owner: String!, $repo: String!, $project: Int!) {
+  repository(owner: $owner, name: $repo) {
+    owner {
+      ... on ProjectV2Owner {
+        project: projectV2(number: $project) {
+          fields(first: 50) {
+            nodes {
+              ... on ProjectV2SingleSelectField {
+                name
+                options {
+                  id
+                  name
+                }
+              }
+            }
+          }
+          items(first: 100) {
+            nodes {
+              id
+              issue: content {
+                ... on Issue {
+                  id
+                  state
+                }
+              }
+              field_values: fieldValues(first: 10) {
+                nodes {
+                  ... on ProjectV2ItemFieldSingleSelectValue {
+                    name
+                    option_id: optionId
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
