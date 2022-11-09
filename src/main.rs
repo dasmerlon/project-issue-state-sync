@@ -1,29 +1,43 @@
 use anyhow::Result;
+use clap::Parser;
+use octocrab::models;
 use serde_json::json;
 
+mod args;
 mod raw_response;
 mod response;
 
+use args::Args;
 use raw_response::Response;
 use response::Project;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let args = Args::parse();
+
     let instance = octocrab::Octocrab::builder()
-        .personal_token("ADD TOKEN HERE")
+        .personal_token(args.github_token)
         .build()?;
 
     let body = json!({
         "query": include_str!("query.graphql"),
         "variables": {
-            "owner": "Tiefgang",
-            "repo": "Orga",
-            "project": 1
+            "owner": args.owner,
+            "repository": args.repository,
+            "project_number": args.project_number
         }
     });
 
     let response: Response = instance.post("graphql", Some(&body)).await?;
     let project: Project = response.into();
-    dbg!(project);
+
+    let issue = instance
+        .issues(args.owner, args.repository)
+        .update(21)
+        .state(args.issue_state)
+        .send()
+        .await?;
+
+    dbg!(issue);
     Ok(())
 }

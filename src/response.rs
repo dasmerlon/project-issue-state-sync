@@ -1,17 +1,29 @@
+use octocrab::models::IssueState as OctoIssueState;
 use serde::Deserialize;
 
 use crate::raw_response::{FieldValues, Response};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, clap::ValueEnum, Clone, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum IssueState {
     Open,
     Closed,
 }
 
+impl From<IssueState> for OctoIssueState {
+    fn from(issue_state: IssueState) -> Self {
+        match issue_state {
+            IssueState::Open => OctoIssueState::Open,
+            IssueState::Closed => OctoIssueState::Closed,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct Issue {
     pub id: String,
+    pub number: usize,
+    pub title: String,
     pub state: IssueState,
 }
 
@@ -42,6 +54,7 @@ pub struct Field {
 
 #[derive(Deserialize, Debug)]
 pub struct Project {
+    pub title: String,
     pub fields: Vec<Field>,
     pub items: Vec<Item>,
 }
@@ -73,7 +86,11 @@ impl From<Response> for Project {
             })
             .collect();
 
-        Project { fields, items }
+        Project {
+            title: project.title,
+            fields,
+            items,
+        }
     }
 }
 

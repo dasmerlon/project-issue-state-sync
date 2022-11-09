@@ -1,8 +1,9 @@
-query projectIssuesAndFields($owner: String!, $repo: String!, $project: Int!) {
-  repository(owner: $owner, name: $repo) {
+query projectIssuesAndFields($owner: String!, $repository: String!, $project_number: Int!) {
+  repository(owner: $owner, name: $repository) {
     owner {
       ... on ProjectV2Owner {
-        project: projectV2(number: $project) {
+        project: projectV2(number: $project_number) {
+          title
           fields(first: 50) {
             nodes {
               ... on ProjectV2SingleSelectField {
@@ -20,6 +21,8 @@ query projectIssuesAndFields($owner: String!, $repo: String!, $project: Int!) {
               issue: content {
                 ... on Issue {
                   id
+                  number
+                  title
                   state
                 }
               }

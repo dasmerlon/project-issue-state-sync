@@ -1,0 +1,13 @@
+# Use this once the following issue is fixed.
+# https://github.com/actions/add-to-project/issues/168
+mutation closeIssue($issueId: ID!) {
+  closeIssue(input:{issueId: $issueId, stateReason:COMPLETED}) {
+    issue {
+      id
+      number
+      title
+      state
+      closedAt
+    }
+  }
+}

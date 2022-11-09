@@ -25,6 +25,7 @@ pub struct Owner {
 
 #[derive(Deserialize, Debug)]
 pub struct Project {
+    pub title: String,
     pub fields: Fields,
     pub items: Items,
 }

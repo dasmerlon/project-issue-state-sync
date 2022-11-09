@@ -13,3 +13,4 @@ tokio = {version = "1", features = ["full"]}
 serde = "1"
 serde_json = "1"
 serde_with = "2"
+clap = { version = "4", features = ["derive", "cargo", "env"] }
