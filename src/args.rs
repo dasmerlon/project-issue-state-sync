@@ -18,10 +18,6 @@ pub struct Args {
     #[arg(short, long, env)]
     pub owner: String,
 
-    /// The Repository name.
-    #[arg(short, long, env)]
-    pub repository: String,
-
     /// The number of the project you target, for example, #1.
     #[arg(short, long, env)]
     pub project_number: usize,

@@ -10,12 +10,7 @@ pub struct Response {
 
 #[derive(Deserialize, Debug)]
 pub struct ResponseData {
-    pub repository: Repository,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Repository {
-    pub owner: Owner,
+    pub repository_owner: Owner,
 }
 
 #[derive(Deserialize, Debug)]

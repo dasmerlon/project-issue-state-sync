@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::raw_response::{FieldValues, Response};
 
-#[derive(Deserialize, clap::ValueEnum, Clone, Debug)]
+#[derive(Deserialize, clap::ValueEnum, Clone, Debug, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum IssueState {
     Open,
@@ -19,12 +19,29 @@ impl From<IssueState> for OctoIssueState {
     }
 }
 
+impl From<OctoIssueState> for IssueState {
+    fn from(issue_state: OctoIssueState) -> Self {
+        match issue_state {
+            OctoIssueState::Open => IssueState::Open,
+            OctoIssueState::Closed => IssueState::Closed,
+            _ => IssueState::Open,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct Issue {
     pub id: String,
-    pub number: usize,
+    pub number: u64,
     pub title: String,
     pub state: IssueState,
+    pub repository: Repository,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Repository {
+    pub id: String,
+    pub name: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -61,7 +78,7 @@ pub struct Project {
 
 impl From<Response> for Project {
     fn from(response: Response) -> Self {
-        let project = response.data.repository.owner.project;
+        let project = response.data.repository_owner.project;
 
         let fields = project
             .fields

@@ -1,37 +1,39 @@
-query projectIssuesAndFields($owner: String!, $repository: String!, $project_number: Int!) {
-  repository(owner: $owner, name: $repository) {
-    owner {
-      ... on ProjectV2Owner {
-        project: projectV2(number: $project_number) {
-          title
-          fields(first: 50) {
-            nodes {
-              ... on ProjectV2SingleSelectField {
+query projectIssuesAndFields($owner: String!, $project_number: Int!) {
+  repository_owner: repositoryOwner(login: $owner) {
+    ... on ProjectV2Owner {
+      project: projectV2(number: $project_number) {
+        title
+        fields(first: 50) {
+          nodes {
+            ... on ProjectV2SingleSelectField {
+              name
+              options {
+                id
                 name
-                options {
+              }
+            }
+          }
+        }
+        items(first: 100) {
+          nodes {
+            id
+            issue: content {
+              ... on Issue {
+                id
+                number
+                title
+                state
+                repository{
                   id
                   name
                 }
               }
             }
-          }
-          items(first: 100) {
-            nodes {
-              id
-              issue: content {
-                ... on Issue {
-                  id
-                  number
-                  title
-                  state
-                }
-              }
-              field_values: fieldValues(first: 10) {
-                nodes {
-                  ... on ProjectV2ItemFieldSingleSelectValue {
-                    name
-                    option_id: optionId
-                  }
+            field_values: fieldValues(first: 10) {
+              nodes {
+                ... on ProjectV2ItemFieldSingleSelectValue {
+                  name
+                  option_id: optionId
                 }
               }
             }

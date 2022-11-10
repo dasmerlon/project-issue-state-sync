@@ -931,10 +931,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "log",
  "octocrab",
  "serde",
  "serde_json",
  "serde_with",
+ "simplelog",
  "tokio",
 ]
 
@@ -1181,6 +1183,16 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "thiserror",
+ "time 0.3.17",
+]
+
+[[package]]
+name = "simplelog"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48dfff04aade74dd495b007c831cd6f4e0cee19c344dd9dc0884c0289b70a786"
+dependencies = [
+ "log",
  "time 0.3.17",
 ]
 

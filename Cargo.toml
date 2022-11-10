@@ -14,3 +14,5 @@ serde = "1"
 serde_json = "1"
 serde_with = "2"
 clap = { version = "4", features = ["derive", "cargo", "env"] }
+log = "0.4"
+simplelog = { version = "0.12", default-features = false }
