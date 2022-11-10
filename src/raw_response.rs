@@ -10,12 +10,12 @@ pub struct Response {
 
 #[derive(Deserialize, Debug)]
 pub struct ResponseData {
-    pub repository_owner: Owner,
+    pub repository_owner: Option<Owner>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Owner {
-    pub project: Project,
+    pub project: Option<Project>,
 }
 
 #[derive(Deserialize, Debug)]

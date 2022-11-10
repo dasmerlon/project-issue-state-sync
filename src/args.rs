@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{ArgAction, Parser};
 
 use crate::response::IssueState;
 
@@ -30,4 +30,8 @@ pub struct Args {
     /// The desired issue state for issues in the specified column.
     #[arg(short, long, env)]
     pub issue_state: IssueState,
+
+    /// Verbose mode (-v, -vv, -vvv)
+    #[arg(short, long, action = ArgAction::Count)]
+    pub verbose: u8,
 }

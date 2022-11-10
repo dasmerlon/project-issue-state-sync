@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use log::{debug, info};
+use log::{debug, error, info, trace};
 use serde_json::json;
 
 mod args;
@@ -15,7 +15,15 @@ use simplelog::{Config, LevelFilter, SimpleLogger};
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    SimpleLogger::init(LevelFilter::Info, Config::default()).unwrap();
+
+    // Set the verbosity level of the logger.
+    let level = match args.verbose {
+        0 => LevelFilter::Info,
+        1 => LevelFilter::Debug,
+        2 => LevelFilter::Trace,
+        _ => LevelFilter::Trace,
+    };
+    SimpleLogger::init(level, Config::default()).unwrap();
 
     let instance = octocrab::Octocrab::builder()
         .personal_token(args.github_token)
@@ -24,15 +32,30 @@ async fn main() -> Result<()> {
     let body = json!({
         "query": include_str!("query.graphql"),
         "variables": {
-            "owner": args.owner.clone(),
+            "owner": &args.owner,
             "project_number": args.project_number
         }
     });
 
     let response: Response = instance.post("graphql", Some(&body)).await?;
+
+    // Inform the user if either the project or owner cannot be found
+    if let Some(owner) = &response.data.repository_owner {
+        if owner.project.is_none() {
+            error!(
+                "Couldn't find project #{} for owner '{}'.",
+                args.project_number, &args.owner
+            );
+            std::process::exit(1);
+        }
+    } else {
+        error!("Couldn't find owner '{}'.", &args.owner);
+        std::process::exit(1);
+    }
+
     let project: Project = response.into();
     info!("Looking at project {}.", project.title);
-    debug!("{project:?}");
+    trace!("{project:?}");
 
     for item in project.items {
         // Ignore items that aren't in the target column
@@ -60,7 +83,14 @@ async fn main() -> Result<()> {
             .state(args.issue_state.clone())
             .send()
             .await?;
+
+        info!(
+            "Issue #{} has now new issue state '{:?}'.",
+            issue.number, &issue.state
+        );
     }
+
+    info!("All done.");
 
     Ok(())
 }

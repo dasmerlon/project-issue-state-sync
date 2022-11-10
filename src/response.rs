@@ -78,7 +78,7 @@ pub struct Project {
 
 impl From<Response> for Project {
     fn from(response: Response) -> Self {
-        let project = response.data.repository_owner.project;
+        let project = response.data.repository_owner.unwrap().project.unwrap();
 
         let fields = project
             .fields
