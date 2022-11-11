@@ -775,7 +775,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "project-workflow-extensions"
+name = "project-issue-state-sync"
 version = "0.1.0"
 dependencies = [
  "anyhow",

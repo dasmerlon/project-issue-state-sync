@@ -1,0 +1,21 @@
+name: 'Project Issue State Sync'
+description: 'Set issue states depending on their project columns.'
+inputs:
+  github_token:
+    description: 'The Github token for API calls.'
+    required: true
+  owner:
+    description: 'The User or Organization owner that owns the repository.'
+    required: true
+  project_number:
+    description: 'The number of the project you target, for example, #1.'
+    required: true
+  closed_stati:
+    description: 'The project board column names in which issues should be closed. For example: "Won't do","Done"'
+    required: false
+  open_stati:
+    description: 'The project board column names in which issues should be open. For example: "Todo","In Progress"'
+    required: false
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

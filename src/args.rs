@@ -2,8 +2,8 @@ use clap::{ArgAction, Parser};
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "TODO",
-    about = "TODO",
+    name = "Project Issue State Sync",
+    about = "Set issue states depending on their project columns.",
     author = env!("CARGO_PKG_AUTHORS"),
     version = env!("CARGO_PKG_VERSION")
 )]
