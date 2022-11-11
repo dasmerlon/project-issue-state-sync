@@ -1,7 +1,5 @@
 use clap::{ArgAction, Parser};
 
-use crate::response::IssueState;
-
 #[derive(Parser, Debug)]
 #[clap(
     name = "TODO",
@@ -22,14 +20,17 @@ pub struct Args {
     #[arg(short, long, env)]
     pub project_number: usize,
 
-    /// The project board column name.
-    /// For example, "Todo", "In Progress" or "Done".
-    #[arg(short, long, env)]
-    pub status: String,
+    /// The project board column names in which issues should be closed.
+    /// For example: "Won't do","Done"
+    /// (Make sure there are no spaces between arguments.)
+    #[arg(short, long, env, value_delimiter(','))]
+    pub closed_stati: Vec<String>,
 
-    /// The desired issue state for issues in the specified column.
-    #[arg(short, long, env)]
-    pub issue_state: IssueState,
+    /// The project board column names in which issues should be open.
+    /// For example: "Todo","In Progress"
+    /// (Make sure there are no spaces between arguments.)
+    #[arg(short('r'), long, env, value_delimiter(','))]
+    pub open_stati: Vec<String>,
 
     /// Verbose mode (-v, -vv, -vvv)
     #[arg(short, long, action = ArgAction::Count)]

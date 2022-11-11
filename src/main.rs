@@ -1,6 +1,7 @@
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use clap::Parser;
-use log::{debug, error, info, trace};
+use log::{error, info, trace};
+use octocrab::Octocrab;
 use serde_json::json;
 
 mod args;
@@ -9,8 +10,10 @@ mod response;
 
 use args::Args;
 use raw_response::Response;
-use response::Project;
+use response::{Field, Item, Project};
 use simplelog::{Config, LevelFilter, SimpleLogger};
+
+use crate::response::IssueState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -25,8 +28,14 @@ async fn main() -> Result<()> {
     };
     SimpleLogger::init(level, Config::default()).unwrap();
 
+    // Inform the user if neither closed_stati nor open_stati is specified.
+    if args.closed_stati.is_empty() && args.open_stati.is_empty() {
+        error!("No project board column names were specified.");
+        std::process::exit(1);
+    }
+
     let instance = octocrab::Octocrab::builder()
-        .personal_token(args.github_token)
+        .personal_token(args.github_token.clone())
         .build()?;
 
     let body = json!({
@@ -39,7 +48,7 @@ async fn main() -> Result<()> {
 
     let response: Response = instance.post("graphql", Some(&body)).await?;
 
-    // Inform the user if either the project or owner cannot be found
+    // Inform the user if either the project or owner cannot be found.
     if let Some(owner) = &response.data.repository_owner {
         if owner.project.is_none() {
             error!(
@@ -57,40 +66,100 @@ async fn main() -> Result<()> {
     info!("Looking at project {}.", project.title);
     trace!("{project:?}");
 
+    let status = project.fields.iter().find(|field| field.name == "Status");
+    if status.is_none() {
+        error!("Something went wrong! There is no 'Status' field.");
+        std::process::exit(1);
+    }
+
+    let closed_option_ids = get_option_ids(status, &args.closed_stati).await;
+    let open_option_ids = get_option_ids(status, &args.open_stati).await;
+
     for item in project.items {
-        // Ignore items that aren't in the target column
-        let has_correct_status = item
-            .field_values
-            .iter()
-            .any(|field_value| field_value.name == args.status);
+        change_issue_state(
+            &item,
+            IssueState::Closed,
+            &args,
+            &instance,
+            &closed_option_ids,
+        )
+        .await?;
 
-        if !has_correct_status {
-            continue;
-        }
-
-        // Ignore issues that already have the desired state
-        if args.issue_state == item.issue.state.clone().into() {
-            continue;
-        }
-
-        info!(
-            "Found issue #{} ({}) in column '{}' and issue state '{:?}'.",
-            item.issue.number, item.issue.title, args.status, &item.issue.state
-        );
-        let issue = instance
-            .issues(args.owner.clone(), item.issue.repository.name)
-            .update(item.issue.number)
-            .state(args.issue_state.clone())
-            .send()
-            .await?;
-
-        info!(
-            "Issue #{} has now new issue state '{:?}'.",
-            issue.number, &issue.state
-        );
+        change_issue_state(&item, IssueState::Open, &args, &instance, &open_option_ids).await?;
     }
 
     info!("All done.");
+    Ok(())
+}
+
+async fn change_issue_state(
+    item: &Item,
+    issue_state: IssueState,
+    args: &Args,
+    instance: &Octocrab,
+    option_ids: &Vec<String>,
+) -> Result<()> {
+    if option_ids.is_empty() {
+        return Ok(());
+    }
+
+    // Ignore items that aren't in the target column
+    let is_in_target_column = item
+        .field_values
+        .iter()
+        .any(|field_value| option_ids.contains(&field_value.option_id));
+
+    if !is_in_target_column {
+        return Ok(());
+    }
+
+    // Ignore issues that already have the desired state
+    if issue_state == item.issue.state.clone().into() {
+        return Ok(());
+    }
+
+    info!(
+        "Found issue #{} ({}) in column '{}' and issue state '{}'.",
+        item.issue.number,
+        item.issue.title,
+        item.field_values
+            .iter()
+            .find(|field_value| option_ids.contains(&field_value.option_id))
+            .unwrap()
+            .name,
+        &item.issue.state.to_string().to_lowercase()
+    );
+    let issue = instance
+        .issues(args.owner.clone(), &item.issue.repository.name)
+        .update(item.issue.number)
+        .state(issue_state)
+        .send()
+        .await?;
+
+    info!(
+        "Issue #{} has now new issue state '{}'.",
+        issue.number, &issue.state
+    );
 
     Ok(())
+}
+
+async fn get_option_ids(status: Option<&Field>, args_stati: &Vec<String>) -> Vec<String> {
+    let mut option_ids: Vec<String> = Vec::new();
+    for status_name in args_stati.iter() {
+        let option = status
+            .unwrap()
+            .options
+            .iter()
+            .find(|option| &option.name == status_name);
+
+        match option {
+            Some(option) => option_ids.push(option.id.clone()),
+            None => {
+                error!("Couldn't find status '{}'.", status_name);
+                std::process::exit(1);
+            }
+        }
+    }
+    option_ids
 }

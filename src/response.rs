@@ -1,9 +1,10 @@
 use octocrab::models::IssueState as OctoIssueState;
 use serde::Deserialize;
+use strum::Display;
 
 use crate::raw_response::{FieldValues, Response};
 
-#[derive(Deserialize, clap::ValueEnum, Clone, Debug, PartialEq)]
+#[derive(Deserialize, clap::ValueEnum, Clone, Debug, PartialEq, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum IssueState {
     Open,

@@ -16,3 +16,4 @@ serde_with = "2"
 clap = { version = "4", features = ["derive", "cargo", "env"] }
 log = "0.4"
 simplelog = { version = "0.12", default-features = false }
+strum = { version = "0.24", features = ["derive"] }
