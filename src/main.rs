@@ -34,10 +34,12 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     }
 
+    // Initialize the Github API client.
     let instance = octocrab::Octocrab::builder()
         .personal_token(args.github_token.clone())
         .build()?;
 
+    // Request the project and issue data.
     let body = json!({
         "query": include_str!("query.graphql"),
         "variables": {
@@ -45,7 +47,6 @@ async fn main() -> Result<()> {
             "project_number": args.project_number
         }
     });
-
     let response: Response = instance.post("graphql", Some(&body)).await?;
 
     // Inform the user if either the project or owner cannot be found.
@@ -62,21 +63,26 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     }
 
+    // Extract the simplified project from the response.
     let project: Project = response.into();
     info!("Looking at project {}.", project.title);
     trace!("{project:?}");
 
-    let status = project.fields.iter().find(|field| field.name == "Status");
-    if status.is_none() {
+    // Extract the status field.
+    let status_field = project.fields.iter().find(|field| field.name == "Status");
+    if status_field.is_none() {
         error!("Something went wrong! There is no 'Status' field.");
         std::process::exit(1);
     }
 
-    let closed_option_ids = get_option_ids(status, &args.closed_stati).await;
-    let open_option_ids = get_option_ids(status, &args.open_stati).await;
+    // We need the option ids of the closed and open stati to check
+    // if an item is in one of the target columns.
+    let closed_option_ids = get_option_ids(status_field, &args.closed_stati).await;
+    let open_option_ids = get_option_ids(status_field, &args.open_stati).await;
 
+    // Ensure the issue state for every item.
     for item in project.items {
-        change_issue_state(
+        ensure_issue_state(
             &item,
             IssueState::Closed,
             &args,
@@ -85,14 +91,16 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-        change_issue_state(&item, IssueState::Open, &args, &instance, &open_option_ids).await?;
+        ensure_issue_state(&item, IssueState::Open, &args, &instance, &open_option_ids).await?;
     }
 
     info!("All done.");
     Ok(())
 }
 
-async fn change_issue_state(
+/// Change the issue state if the issue's item is in one of the target columns
+/// and the issue has the wrong state.
+async fn ensure_issue_state(
     item: &Item,
     issue_state: IssueState,
     args: &Args,
@@ -103,7 +111,7 @@ async fn change_issue_state(
         return Ok(());
     }
 
-    // Ignore items that aren't in the target column
+    // Ignore the item if it isn't in one of the target columns.
     let is_in_target_column = item
         .field_values
         .iter()
@@ -113,7 +121,7 @@ async fn change_issue_state(
         return Ok(());
     }
 
-    // Ignore issues that already have the desired state
+    // Ignore the issue if it already has the desired state.
     if issue_state == item.issue.state.clone().into() {
         return Ok(());
     }
@@ -129,6 +137,8 @@ async fn change_issue_state(
             .name,
         &item.issue.state.to_string().to_lowercase()
     );
+
+    // Change the issue state.
     let issue = instance
         .issues(args.owner.clone(), &item.issue.repository.name)
         .update(item.issue.number)
@@ -144,10 +154,11 @@ async fn change_issue_state(
     Ok(())
 }
 
-async fn get_option_ids(status: Option<&Field>, args_stati: &Vec<String>) -> Vec<String> {
+/// Get the respective option ids for the given list of stati.
+async fn get_option_ids(status_field: Option<&Field>, stati: &Vec<String>) -> Vec<String> {
     let mut option_ids: Vec<String> = Vec::new();
-    for status_name in args_stati.iter() {
-        let option = status
+    for status_name in stati.iter() {
+        let option = status_field
             .unwrap()
             .options
             .iter()
