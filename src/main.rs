@@ -13,18 +13,17 @@ use raw_response::Response;
 use response::{Field, Item, Project};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
-use crate::response::IssueState;
+use crate::{args::LogLevel, response::IssueState};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
     // Set the verbosity level of the logger.
-    let level = match args.verbose {
-        0 => LevelFilter::Info,
-        1 => LevelFilter::Debug,
-        2 => LevelFilter::Trace,
-        _ => LevelFilter::Trace,
+    let level = match args.verbosity {
+        LogLevel::Info => LevelFilter::Info,
+        LogLevel::Debug => LevelFilter::Debug,
+        LogLevel::Trace => LevelFilter::Trace,
     };
     SimpleLogger::init(level, Config::default()).unwrap();
 
@@ -74,7 +73,7 @@ async fn main() -> Result<()> {
         "Looking at project #{} '{}'.",
         args.project_number, project.title
     );
-    trace!("{project:?}");
+    trace!("{project:#?}");
 
     // Extract the status field.
     let status_field = project.fields.iter().find(|field| field.name == "Status");
@@ -130,7 +129,7 @@ async fn ensure_issue_state(
     }
 
     // Ignore the issue if it already has the desired state.
-    if issue_state == item.issue.state.clone().into() {
+    if issue_state == item.issue.state {
         return Ok(());
     }
 

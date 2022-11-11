@@ -1,4 +1,4 @@
-use clap::{ArgAction, Parser};
+use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -32,7 +32,14 @@ pub struct Args {
     #[arg(short('r'), long, env = "INPUT_OPEN_STATI", value_delimiter(','))]
     pub open_stati: Vec<String>,
 
-    /// Verbose mode (-v, -vv, -vvv)
-    #[arg(short, long, action = ArgAction::Count)]
-    pub verbose: u8,
+    /// Log output verbosity (info, debug, trace).
+    #[arg(short, long, env = "INPUT_VERBOSITY", default_value = "info")]
+    pub verbosity: LogLevel,
+}
+
+#[derive(clap::ValueEnum, Clone, Debug)]
+pub enum LogLevel {
+    Info,
+    Debug,
+    Trace,
 }

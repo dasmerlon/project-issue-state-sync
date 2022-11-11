@@ -16,6 +16,9 @@ inputs:
   open_stati:
     description: 'The project board column names in which issues should be open.'
     required: false
+  verbosity:
+    description: 'Log output verbosity (info, debug, trace). Default: info'
+    required: false
 runs:
   using: 'docker'
   image: 'Dockerfile'
