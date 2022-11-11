@@ -11,10 +11,10 @@ inputs:
     description: 'The number of the project you target, for example, #1.'
     required: true
   closed_stati:
-    description: 'The project board column names in which issues should be closed. For example: "Won't do","Done"'
+    description: 'The project board column names in which issues should be closed.'
     required: false
   open_stati:
-    description: 'The project board column names in which issues should be open. For example: "Todo","In Progress"'
+    description: 'The project board column names in which issues should be open.'
     required: false
 runs:
   using: 'docker'

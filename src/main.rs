@@ -28,6 +28,11 @@ async fn main() -> Result<()> {
     };
     SimpleLogger::init(level, Config::default()).unwrap();
 
+    info!(
+        "closed_stati: {:?}, open_stati: {:?}",
+        args.closed_stati, args.open_stati
+    );
+
     // Inform the user if neither closed_stati nor open_stati is specified.
     if args.closed_stati.is_empty() && args.open_stati.is_empty() {
         error!("No project board column names were specified.");
@@ -65,7 +70,10 @@ async fn main() -> Result<()> {
 
     // Extract the simplified project from the response.
     let project: Project = response.into();
-    info!("Looking at project {}.", project.title);
+    info!(
+        "Looking at project #{} '{}'.",
+        args.project_number, project.title
+    );
     trace!("{project:?}");
 
     // Extract the status field.
@@ -127,7 +135,7 @@ async fn ensure_issue_state(
     }
 
     info!(
-        "Found issue #{} ({}) in column '{}' and issue state '{}'.",
+        "Found issue #{} '{}' in column '{}' and issue state '{}'.",
         item.issue.number,
         item.issue.title,
         item.field_values
