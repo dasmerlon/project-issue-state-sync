@@ -19,6 +19,7 @@ inputs:
   verbosity:
     description: 'Log output verbosity (info, debug, trace). Default: info'
     required: false
+    default: info
 runs:
   using: 'docker'
   image: 'Dockerfile'
