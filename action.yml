@@ -1,14 +1,17 @@
 name: 'Project Issue State Sync'
 description: 'Set issue states depending on their project columns.'
+branding:
+  icon: 'table'
+  color: 'blue'
 inputs:
   github_token:
-    description: 'The Github token for API calls.'
+    description: 'The personal access token.'
     required: true
   owner:
-    description: 'The User or Organization owner that owns the repository.'
+    description: 'The user or organization that owns the repository and project.'
     required: true
   project_number:
-    description: 'The number of the project you target, for example, #1.'
+    description: 'The number of the project you target.'
     required: true
   closed_stati:
     description: 'The project board column names in which issues should be closed.'
@@ -17,7 +20,7 @@ inputs:
     description: 'The project board column names in which issues should be open.'
     required: false
   verbosity:
-    description: 'Log output verbosity (info, debug, trace). Default: info'
+    description: 'Log output verbosity (info, debug, trace).'
     required: false
     default: info
 runs:
