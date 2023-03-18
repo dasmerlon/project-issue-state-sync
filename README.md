@@ -68,9 +68,12 @@ This workflow runs every 2 hours or if manually started.
 name: Project Issue State Sync
 
 on: 
-  workflow_dispatch:
+  schedule:
     # At minute 0 every 2 hours
     - cron: 0 0-23/2 * * *
+  
+  workflow_dispatch:
+    # Manual trigger
 
 jobs:
   issue-state-sync:
@@ -78,7 +81,7 @@ jobs:
 
     steps:
       - name: Sync issue states
-        uses: dasmerlon/project-issue-state-sync@v1
+        uses: dasmerlon/project-issue-state-sync@v1.0.0
         with:
           github_token: ${{ secrets.PROJECT_ISSUE_SYNC_TOKEN }}
           owner: OWNER_NAME
