@@ -18,8 +18,8 @@ With this action you can specify the project columns in which issues should be c
 | `github_token`   | The personal access token                                                                                                                                   |     ✓    |
 | `owner`          | The user or organization that owns the repository and project                                                                                               |     ✓    |
 | `project_number` | The number of the project you target                                                                                                                        |     ✓    |   
-| `closed_stati`   | The project board column names in which issues should be closed <br> For example: `Won't do,Done` <br> _(Make sure there are no spaces between arguments)_  |     ✕    |   
-| `open_stati`     | The project board column names in which issues should be open <br> For example: `Todo,In Progress` <br> _(Make sure there are no spaces between arguments)_ |     ✕    |  
+| `closed_statuses`   | The project board column names in which issues should be closed <br> For example: `Won't do,Done` <br> _(Make sure there are no spaces between arguments)_  |     ✕    |   
+| `open_statuses`     | The project board column names in which issues should be open <br> For example: `Todo,In Progress` <br> _(Make sure there are no spaces between arguments)_ |     ✕    |  
 | `verbosity`      | The log output verbosity <br> Possible values: `info`, `debug`, `trace` <br> Default: `info`                                                                |     ✕    |
 
 ## Creating a PAT
@@ -83,8 +83,8 @@ jobs:
           github_token: ${{ secrets.PROJECT_ISSUE_SYNC_TOKEN }}
           owner: OWNER_NAME
           project_number: 1
-          closed_stati: Done
-          open_stati: Todo,In Progress
+          closed_statuses: Done
+          open_statuses: Todo,In Progress
 
 ```
 
