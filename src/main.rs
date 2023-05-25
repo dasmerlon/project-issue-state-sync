@@ -10,7 +10,7 @@ mod response;
 
 use args::Args;
 use raw_response::Response;
-use response::{Field, Item, Project};
+use response::{Field, Item, PageInfo, Project};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use crate::{args::LogLevel, response::IssueState};
@@ -39,66 +39,19 @@ async fn main() -> Result<()> {
     }
 
     // Initialize the Github API client.
-    let instance = octocrab::Octocrab::builder()
+    let client = octocrab::Octocrab::builder()
         .personal_token(args.github_token.clone())
         .build()?;
 
-    // Request the project and issue data.
-    let body = json!({
-        "query": include_str!("query.graphql"),
-        "variables": {
-            "owner": &args.owner,
-            "project_number": args.project_number
-        }
-    });
-    let response: Response = instance.post("graphql", Some(&body)).await?;
+    let mut end_cursor = None;
+    let mut has_next_page = true;
 
-    // Inform the user if either the project or owner cannot be found.
-    if let Some(owner) = &response.data.repository_owner {
-        if owner.project.is_none() {
-            error!(
-                "Couldn't find project #{} for owner '{}'.",
-                args.project_number, &args.owner
-            );
-            std::process::exit(1);
-        }
-    } else {
-        error!("Couldn't find owner '{}'.", &args.owner);
-        std::process::exit(1);
-    }
-
-    // Extract the simplified project from the response.
-    let project: Project = response.into();
-    info!(
-        "Looking at project #{} '{}'.",
-        args.project_number, project.title
-    );
-    trace!("{project:#?}");
-
-    // Extract the status field.
-    let status_field = project.fields.iter().find(|field| field.name == "Status");
-    if status_field.is_none() {
-        error!("Something went wrong! There is no 'Status' field.");
-        std::process::exit(1);
-    }
-
-    // We need the option ids of the closed and open statuses to check
-    // if an item is in one of the target columns.
-    let closed_option_ids = get_option_ids(status_field, &args.closed_statuses).await;
-    let open_option_ids = get_option_ids(status_field, &args.open_statuses).await;
-
-    // Ensure the issue state for every item.
-    for item in project.items {
-        ensure_issue_state(
-            &item,
-            IssueState::Closed,
-            &args,
-            &instance,
-            &closed_option_ids,
-        )
-        .await?;
-
-        ensure_issue_state(&item, IssueState::Open, &args, &instance, &open_option_ids).await?;
+    while has_next_page {
+        info!("Processing issue batch.");
+        PageInfo {
+            end_cursor,
+            has_next_page,
+        } = process_issue_batch(&client, &args, &end_cursor).await?;
     }
 
     info!("All done.");
@@ -111,7 +64,7 @@ async fn ensure_issue_state(
     item: &Item,
     issue_state: IssueState,
     args: &Args,
-    instance: &Octocrab,
+    client: &Octocrab,
     option_ids: &Vec<String>,
 ) -> Result<()> {
     if option_ids.is_empty() {
@@ -146,7 +99,7 @@ async fn ensure_issue_state(
     );
 
     // Change the issue state.
-    let issue = instance
+    let issue = client
         .issues(args.owner.clone(), &item.issue.repository.name)
         .update(item.issue.number)
         .state(issue_state)
@@ -180,4 +133,75 @@ async fn get_option_ids(status_field: Option<&Field>, statuses: &Vec<String>) ->
         }
     }
     option_ids
+}
+
+async fn process_issue_batch(
+    client: &Octocrab,
+    args: &Args,
+    cursor: &Option<String>,
+) -> Result<PageInfo> {
+    // Request the project and issue data.
+    let body = json!({
+        "query": include_str!("query.graphql"),
+        "variables": {
+            "owner": &args.owner,
+            "project_number": args.project_number,
+            "cursor": cursor,
+        }
+    });
+    let response: Response = client.post("graphql", Some(&body)).await?;
+    trace!("{response:#?}");
+
+    // Inform the user if either the project or owner cannot be found.
+    if let Some(owner) = &response.data.repository_owner {
+        if owner.project.is_none() {
+            error!(
+                "Couldn't find project #{} for owner '{}'.",
+                args.project_number, &args.owner
+            );
+            std::process::exit(1);
+        }
+    } else {
+        error!("Couldn't find owner '{}'.", &args.owner);
+        std::process::exit(1);
+    }
+
+    // Extract the simplified project from the response.
+    let project: Project = response.into();
+    if cursor.is_none() {
+        info!(
+            "Looking at project #{} '{}'.",
+            args.project_number, project.title
+        );
+        trace!("{project:#?}");
+    }
+
+    // Extract the status field.
+    let status_field = project.fields.iter().find(|field| field.name == "Status");
+    if status_field.is_none() {
+        error!("Something went wrong! There is no 'Status' field.");
+        std::process::exit(1);
+    }
+
+    // We need the option ids of the closed and open statuses to check
+    // if an item is in one of the target columns.
+    let closed_option_ids = get_option_ids(status_field, &args.closed_statuses).await;
+    let open_option_ids = get_option_ids(status_field, &args.open_statuses).await;
+
+    info!("Found {} issues.", project.items.len());
+    // Ensure the issue state for every item.
+    for item in project.items {
+        ensure_issue_state(
+            &item,
+            IssueState::Closed,
+            &args,
+            &client,
+            &closed_option_ids,
+        )
+        .await?;
+
+        ensure_issue_state(&item, IssueState::Open, &args, &client, &open_option_ids).await?;
+    }
+
+    Ok(project.page_info)
 }

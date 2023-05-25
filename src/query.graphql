@@ -1,9 +1,9 @@
-query projectIssuesAndFields($owner: String!, $project_number: Int!) {
+query projectIssuesAndFields($owner: String!, $project_number: Int!, $cursor: String ) {
   repository_owner: repositoryOwner(login: $owner) {
     ... on ProjectV2Owner {
       project: projectV2(number: $project_number) {
         title
-        fields(first: 50) {
+        fields(first: 100) {
           nodes {
             ... on ProjectV2SingleSelectField {
               name
@@ -14,7 +14,7 @@ query projectIssuesAndFields($owner: String!, $project_number: Int!) {
             }
           }
         }
-        items(first: 100) {
+        items(first: 100, after: $cursor) {
           nodes {
             id
             issue: content {
@@ -23,13 +23,13 @@ query projectIssuesAndFields($owner: String!, $project_number: Int!) {
                 number
                 title
                 state
-                repository{
+                repository {
                   id
                   name
                 }
               }
             }
-            field_values: fieldValues(first: 10) {
+            field_values: fieldValues(first: 100) {
               nodes {
                 ... on ProjectV2ItemFieldSingleSelectValue {
                   name
@@ -37,6 +37,10 @@ query projectIssuesAndFields($owner: String!, $project_number: Int!) {
                 }
               }
             }
+          }
+          page_info: pageInfo {
+            end_cursor: endCursor
+            has_next_page: hasNextPage
           }
         }
       }

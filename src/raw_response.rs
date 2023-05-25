@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_with::{serde_as, DefaultOnError};
 
-use crate::response::{FieldOption, Issue};
+use crate::response::{FieldOption, Issue, PageInfo};
 
 #[derive(Deserialize, Debug)]
 pub struct Response {
@@ -33,6 +33,7 @@ pub struct Fields {
 #[derive(Deserialize, Debug)]
 pub struct Items {
     pub nodes: Vec<Item>,
+    pub page_info: PageInfo,
 }
 
 #[derive(Deserialize, Debug)]

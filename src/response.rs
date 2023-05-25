@@ -59,6 +59,12 @@ pub struct Item {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct PageInfo {
+    pub end_cursor: Option<String>,
+    pub has_next_page: bool,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct FieldOption {
     pub id: String,
     pub name: String,
@@ -75,6 +81,7 @@ pub struct Project {
     pub title: String,
     pub fields: Vec<Field>,
     pub items: Vec<Item>,
+    pub page_info: PageInfo,
 }
 
 impl From<Response> for Project {
@@ -108,6 +115,7 @@ impl From<Response> for Project {
             title: project.title,
             fields,
             items,
+            page_info: project.items.page_info,
         }
     }
 }
