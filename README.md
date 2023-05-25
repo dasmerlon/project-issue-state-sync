@@ -81,7 +81,7 @@ jobs:
 
     steps:
       - name: Sync issue states
-        uses: dasmerlon/project-issue-state-sync@v1.0.0
+        uses: dasmerlon/project-issue-state-sync@v2
         with:
           github_token: ${{ secrets.PROJECT_ISSUE_SYNC_TOKEN }}
           owner: OWNER_NAME
