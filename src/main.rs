@@ -28,12 +28,12 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     info!(
-        "closed_stati: {:?}, open_stati: {:?}",
-        args.closed_stati, args.open_stati
+        "closed_statuses: {:?}, open_statuses: {:?}",
+        args.closed_statuses, args.open_statuses
     );
 
-    // Inform the user if neither closed_stati nor open_stati is specified.
-    if args.closed_stati.is_empty() && args.open_stati.is_empty() {
+    // Inform the user if neither closed_statuses nor open_statuses is specified.
+    if args.closed_statuses.is_empty() && args.open_statuses.is_empty() {
         error!("No project board column names were specified.");
         std::process::exit(1);
     }
@@ -82,10 +82,10 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     }
 
-    // We need the option ids of the closed and open stati to check
+    // We need the option ids of the closed and open statuses to check
     // if an item is in one of the target columns.
-    let closed_option_ids = get_option_ids(status_field, &args.closed_stati).await;
-    let open_option_ids = get_option_ids(status_field, &args.open_stati).await;
+    let closed_option_ids = get_option_ids(status_field, &args.closed_statuses).await;
+    let open_option_ids = get_option_ids(status_field, &args.open_statuses).await;
 
     // Ensure the issue state for every item.
     for item in project.items {
@@ -161,10 +161,10 @@ async fn ensure_issue_state(
     Ok(())
 }
 
-/// Get the respective option ids for the given list of stati.
-async fn get_option_ids(status_field: Option<&Field>, stati: &Vec<String>) -> Vec<String> {
+/// Get the respective option ids for the given list of statuses.
+async fn get_option_ids(status_field: Option<&Field>, statuses: &Vec<String>) -> Vec<String> {
     let mut option_ids: Vec<String> = Vec::new();
-    for status_name in stati.iter() {
+    for status_name in statuses.iter() {
         let option = status_field
             .unwrap()
             .options

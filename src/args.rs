@@ -23,14 +23,14 @@ pub struct Args {
     /// The project board column names in which issues should be closed.
     /// For example: "Won't do","Done"
     /// (Make sure there are no spaces between arguments.)
-    #[arg(short, long, env = "INPUT_CLOSED_STATI", value_delimiter(','))]
-    pub closed_stati: Vec<String>,
+    #[arg(short, long, env = "INPUT_CLOSED_STATUSES", value_delimiter(','))]
+    pub closed_statuses: Vec<String>,
 
     /// The project board column names in which issues should be open.
     /// For example: "Todo","In Progress"
     /// (Make sure there are no spaces between arguments.)
-    #[arg(short('r'), long, env = "INPUT_OPEN_STATI", value_delimiter(','))]
-    pub open_stati: Vec<String>,
+    #[arg(short('r'), long, env = "INPUT_OPEN_STATUSES", value_delimiter(','))]
+    pub open_statuses: Vec<String>,
 
     /// Log output verbosity (info, debug, trace).
     #[arg(short, long, env = "INPUT_VERBOSITY", default_value = "info")]
