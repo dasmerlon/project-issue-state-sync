@@ -100,7 +100,7 @@ async fn ensure_issue_state(
 
     // Change the issue state.
     let issue = client
-        .issues(args.owner.clone(), &item.issue.repository.name)
+        .issues(&item.issue.repository.owner.login, &item.issue.repository.name)
         .update(item.issue.number)
         .state(issue_state)
         .send()
