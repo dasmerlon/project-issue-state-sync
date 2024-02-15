@@ -17,7 +17,7 @@ use crate::{args::LogLevel, response::IssueState};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
+    let mut args = Args::parse();
 
     // Set the verbosity level of the logger.
     let level = match args.verbosity {
@@ -26,6 +26,12 @@ async fn main() -> Result<()> {
         LogLevel::Trace => LevelFilter::Trace,
     };
     SimpleLogger::init(level, Config::default()).unwrap();
+
+    // We receive empty strings for the two parameters below if no parameter is provided.
+    // I assume that this happens due to Github's environment variable passthrough to docker containers.
+    // To prevent any errors, just remove any empty strings.
+    args.closed_statuses.retain(|status| !status.is_empty());
+    args.open_statuses.retain(|status| !status.is_empty());
 
     info!(
         "closed_statuses: {:?}, open_statuses: {:?}",
@@ -65,7 +71,7 @@ async fn ensure_issue_state(
     issue_state: IssueState,
     args: &Args,
     client: &Octocrab,
-    option_ids: &Vec<String>,
+    option_ids: &[String],
 ) -> Result<()> {
     if option_ids.is_empty() {
         return Ok(());
@@ -107,7 +113,7 @@ async fn ensure_issue_state(
         .await?;
 
     info!(
-        "Issue #{} has now new issue state '{}'.",
+        "Issue #{} has now new issue state '{:?}'.",
         issue.number, &issue.state
     );
 
@@ -115,7 +121,7 @@ async fn ensure_issue_state(
 }
 
 /// Get the respective option ids for the given list of statuses.
-async fn get_option_ids(status_field: Option<&Field>, statuses: &Vec<String>) -> Vec<String> {
+async fn get_option_ids(status_field: Option<&Field>, statuses: &[String]) -> Vec<String> {
     let mut option_ids: Vec<String> = Vec::new();
     for status_name in statuses.iter() {
         let option = status_field
@@ -191,16 +197,9 @@ async fn process_issue_batch(
     info!("Found {} issues.", project.items.len());
     // Ensure the issue state for every item.
     for item in project.items {
-        ensure_issue_state(
-            &item,
-            IssueState::Closed,
-            &args,
-            &client,
-            &closed_option_ids,
-        )
-        .await?;
+        ensure_issue_state(&item, IssueState::Closed, args, client, &closed_option_ids).await?;
 
-        ensure_issue_state(&item, IssueState::Open, &args, &client, &open_option_ids).await?;
+        ensure_issue_state(&item, IssueState::Open, args, client, &open_option_ids).await?;
     }
 
     Ok(project.page_info)
