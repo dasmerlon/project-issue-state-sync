@@ -47,6 +47,7 @@ async fn main() -> Result<()> {
     // Initialize the Github API client.
     let client = octocrab::Octocrab::builder()
         .personal_token(args.github_token.clone())
+        .base_uri("https://api.github.com")?
         .build()?;
 
     let mut end_cursor = None;
@@ -155,7 +156,7 @@ async fn process_issue_batch(
             "cursor": cursor,
         }
     });
-    let response: Response = client.post("graphql", Some(&body)).await?;
+    let response: Response = client.graphql(&body).await?;
     trace!("{response:#?}");
 
     // Inform the user if either the project or owner cannot be found.
